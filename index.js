@@ -1,14 +1,25 @@
-
-const express = require('express');
-const http = require('http');
-const https = require('https');
-const socketIO = require('socket.io');
-const { ExpressPeerServer } = require('peer');
 const path = require('path');
 const fs = require('fs');
 const port = process.env.PORT || 8080;
-
+const express = require('express');
+const http = require('http');
+const https = require('https');
 const app = express();
+const socketIO = require('socket.io');
+const { ExpressPeerServer } = require('peer');
+
+const secureServer = https.createServer({
+    key: fs.readFileSync('data/server.key'),
+    cert: fs.readFileSync('data/server.cert'),
+    requestCert: false,
+    rejectUnauthorized: false
+}, app);
+
+secureServer.listen(443, () => {
+    console.log('listening https');
+});
+
+const io = socketIO(secureServer).sockets;
 
 app.use(express.static(__dirname));
 
@@ -18,12 +29,6 @@ app.get('/', (req, res) => {
 
 const server = http.createServer(app).listen(port);
 
-const secureServer = https.createServer({
-    key: fs.readFileSync('data/server.key'),
-    cert: fs.readFileSync('data/server.cert')},
-    app);
-
-const io = socketIO(secureServer).sockets;
 const peerServer = ExpressPeerServer(server, { 
     path: '/',
     debug: true
@@ -35,6 +40,7 @@ app.use('/peer', peerServer);
 
 io.on('connection', socket =>
 {
+    console.log('connected');
     socket.on('join-game', (username, gender, roomCode, peerID) =>
     {
         console.log(roomCode);
@@ -44,6 +50,3 @@ io.on('connection', socket =>
     });
 });
 
-secureServer.listen(443, () => {
-    console.log('listening https');
-});
