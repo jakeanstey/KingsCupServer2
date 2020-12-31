@@ -11,9 +11,12 @@ const { ExpressPeerServer } = require('peer');
 const secureServer = https.createServer({
     key: fs.readFileSync('data/server.key'),
     cert: fs.readFileSync('data/server.cert'),
+    ca: fs.readFileSync('data/server.ca-bundle'),
     requestCert: false,
     rejectUnauthorized: false
 }, app);
+
+const server = http.createServer(app).listen(port);
 
 secureServer.listen(443, () => {
     console.log('listening https');
@@ -24,10 +27,10 @@ const io = socketIO(secureServer).sockets;
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
+    console.log('website reached')
     res.sendFile(path.join(__dirname, 'index.html'));
   });
 
-const server = http.createServer(app).listen(port);
 
 const peerServer = ExpressPeerServer(server, { 
     path: '/',
