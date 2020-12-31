@@ -23,7 +23,13 @@ const secureServer = https.createServer({
     app);
 
 const io = socketIO(secureServer).sockets;
-const peerServer = ExpressPeerServer(secureServer, { debug: true, path: '/' });
+const peerServer = ExpressPeerServer(secureServer, { 
+    path: '/',
+    ssl: {
+        key: fs.readFileSync('data/server.key'),
+        cert: fs.readFileSync('data/server.cert')
+      }
+});
 
 let players = [];
 
