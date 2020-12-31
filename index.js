@@ -1,6 +1,6 @@
 
 const express = require('express');
-// const http = require('http');
+const http = require('http');
 const https = require('https');
 const socketIO = require('socket.io');
 const { ExpressPeerServer } = require('peer');
@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
   });
 
-// const server = http.createServer(app);
+const server = http.createServer(app).listen(port);
 
 const secureServer = https.createServer({
     key: fs.readFileSync('data/server.key'),
@@ -23,13 +23,9 @@ const secureServer = https.createServer({
     app);
 
 const io = socketIO(secureServer).sockets;
-const peerServer = ExpressPeerServer(secureServer, { 
-    port: 443,
+const peerServer = ExpressPeerServer(server, { 
     path: '/',
-    ssl: {
-        key: fs.readFileSync('data/server.key'),
-        cert: fs.readFileSync('data/server.cert')
-      }
+    debug: true
 });
 
 let players = [];
@@ -52,4 +48,4 @@ const port = process.env.PORT || 8080;
 secureServer.listen(443, () => {
     console.log('listening https');
 });
-// server.listen(port, () => console.log("Server started"));
+server.listen(port, () => console.log("Server started"));
