@@ -47,4 +47,3 @@ io.on('connection', socket =>
 secureServer.listen(443, () => {
     console.log('listening https');
 });
-server.listen(port, () => console.log("Server started"));
