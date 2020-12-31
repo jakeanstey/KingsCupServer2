@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
   });
 
-//const server = http.createServer(app);
+// const server = http.createServer(app);
 
 const secureServer = https.createServer({
     key: fs.readFileSync('data/server.key'),
@@ -24,6 +24,7 @@ const secureServer = https.createServer({
 
 const io = socketIO(secureServer).sockets;
 const peerServer = ExpressPeerServer(secureServer, { 
+    port: 443,
     path: '/',
     ssl: {
         key: fs.readFileSync('data/server.key'),
