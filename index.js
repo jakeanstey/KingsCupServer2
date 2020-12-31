@@ -6,6 +6,7 @@ const socketIO = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const path = require('path');
 const fs = require('fs');
+const port = process.env.PORT || 8080;
 
 const app = express();
 
@@ -42,8 +43,6 @@ io.on('connection', socket =>
         socket.to('ASDF').broadcast.emit('user-joined', username, peerID);
     });
 });
-
-const port = process.env.PORT || 8080;
 
 secureServer.listen(443, () => {
     console.log('listening https');
