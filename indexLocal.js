@@ -3,33 +3,20 @@ const fs = require('fs');
 const port = process.env.PORT || 8080;
 const express = require('express');
 const http = require('http');
-const https = require('https');
 const app = express();
 const socketIO = require('socket.io');
-const { ExpressPeerServer } = require('peer');
-
-const secureServer = https.createServer({
-    key: fs.readFileSync('data/server.key'),
-    cert: fs.readFileSync('data/server.cert'),
-    ca: fs.readFileSync('data/server.ca-bundle'),
-    requestCert: false,
-    rejectUnauthorized: false
-}, app);
+const { ExpressPeerServer, PeerServer } = require('peer');
 
 const server = http.createServer(app).listen(port);
 
-secureServer.listen(443, () => {
-    console.log('listening https');
-});
-
-const io = socketIO(secureServer).sockets;
+const io = socketIO(server).sockets;
 
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     console.log('website reached')
     res.sendFile(path.join(__dirname, 'index.html'));
-  });
+});
 
 
 const peerServer = ExpressPeerServer(server, { 
@@ -40,9 +27,28 @@ const peerServer = ExpressPeerServer(server, {
 app.use('/peer', peerServer);
 
 /// GAME LOGIC ///
+
 let rooms = {};
 const Deck = require('./Deck');
 const bank = 'abcdefghijklmnopqrstuvwxyz1234567890';
+const cards = [
+    {
+        faceName: 'K',
+        suit: 0
+    },
+    {
+        faceName: 'K',
+        suit: 0
+    },
+    {
+        faceName: 'K',
+        suit: 0
+    },
+    {
+        faceName: 'K',
+        suit: 0
+    }
+];
 
 io.on('connection', socket =>
 {
@@ -122,7 +128,8 @@ io.on('connection', socket =>
         {
             if(room.state === 1)
             {
-                const card = JSON.stringify(room.deck.dealCard());
+                //const card = JSON.stringify(room.deck.dealCard());
+                const card = JSON.stringify(cards.shift());
                 io.in(roomCode).emit('card-dealt', card, room.players[room.turnIndex].username);
             }
         });

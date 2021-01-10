@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index",
+    "start": "nodemon indexLocal.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -12,6 +12,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "http": "^0.0.1-security",
+    "https": "^1.0.0",
     "peer": "^0.6.1",
     "socket.io": "^3.0.4"
   }
