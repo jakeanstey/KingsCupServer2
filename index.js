@@ -49,8 +49,7 @@ io.on('connection', socket =>
     socket.on('join-game', (username, gender, roomCode, peerID) =>
     {
         /// debug constant
-        // roomCode = strip(roomCode);
-        roomCode = 'ASDF';
+        roomCode = strip(roomCode);
         
         let room = rooms[roomCode];
         if(room === undefined || room === null)
