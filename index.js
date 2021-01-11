@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
 
 const peerServer = ExpressPeerServer(server, { 
     path: '/',
-    debug: true
+    debug: false
 });
 
 app.use('/peer', peerServer);
@@ -317,7 +317,7 @@ io.on('connection', socket =>
         });
 
         socket.on('more', () =>{
-            this.broadcastCurrentPlayer();
+            broadcastCurrentPlayer();
         });
 
         function processQueue()
