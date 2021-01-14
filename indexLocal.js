@@ -81,6 +81,10 @@ io.on('connection', socket =>
         else
         {
             room.players = [...room.players, { username, gender, peerID, socket }];
+            if(room.state === 1)
+            {
+                socket.emit('game-started');
+            }
         }
 
         socket.join(roomCode);
