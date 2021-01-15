@@ -74,6 +74,10 @@ io.on('connection', socket =>
         else
         {
             room.players = [...room.players, { username, gender, peerID, socket }];
+            if(room.state === 1)
+            {
+                socket.emit('game-started');
+            }
         }
 
         socket.join(roomCode);
@@ -324,10 +328,13 @@ io.on('connection', socket =>
         {
             if(room.queue.length > 0)
             {
-                const message = room.queue.shift()
-                message.player.socket.emit('drink', message.player.peerID, message.date, 'date');
-                message.player.socket.to(roomCode).broadcast.emit('drink', message.player.peerID, message.date + ',' + message.player.username, 'date');
-
+                try
+                {
+                    const message = room.queue.shift()
+                    message.player.socket.emit('drink', message.player.peerID, message.date, 'date');
+                    message.player.socket.to(roomCode).broadcast.emit('drink', message.player.peerID, message.date + ',' + message.player.username, 'date');
+                }
+                catch{}
                 // call this method in three seconds
                 setTimeout(processQueue, 3 * 1000);
             }
