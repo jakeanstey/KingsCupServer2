@@ -46,6 +46,8 @@ const bank = 'abcdefghijklmnopqrstuvwxyz1234567890';
 
 io.on('connection', socket =>
 {
+    console.log('user connected');
+
     socket.on('join-game', (username, gender, roomCode, peerID) =>
     {
         /// debug constant
@@ -321,20 +323,17 @@ io.on('connection', socket =>
         });
 
         socket.on('more', () =>{
-            broadcastCurrentPlayer();
+            this.broadcastCurrentPlayer();
         });
 
         function processQueue()
         {
             if(room.queue.length > 0)
             {
-                try
-                {
-                    const message = room.queue.shift()
-                    message.player.socket.emit('drink', message.player.peerID, message.date, 'date');
-                    message.player.socket.to(roomCode).broadcast.emit('drink', message.player.peerID, message.date + ',' + message.player.username, 'date');
-                }
-                catch{}
+                const message = room.queue.shift()
+                message.player.socket.emit('drink', message.player.peerID, message.date, 'date');
+                message.player.socket.to(roomCode).broadcast.emit('drink', message.player.peerID, message.date + ',' + message.player.username, 'date');
+
                 // call this method in three seconds
                 setTimeout(processQueue, 3 * 1000);
             }
@@ -373,11 +372,48 @@ io.on('connection', socket =>
         {
             if(room.players.find(player => player.peerID === otherPeerID) !== null)
             {
-                cvonsole.log(peerID + ' lost connection to ' + otherPeerID);
+                console.log(peerID + ' lost connection to ' + otherPeerID);
                 callback(true);
+                return;
             }
-            return false;
+            callback(false);
         });
+
+        socket.on('left-game', () =>
+        {
+            console.log(peerID + ' left');
+            room.players = room.players.filter(player => player.peerID !== peerID);
+            socket.to(roomCode).broadcast.emit('user-disconnected', peerID);
+            
+            // clean up and dispose if needed
+            if (room.players.length === 0)
+            {
+                console.log('room', roomCode, 'empty. cleaning up');
+                room = null;
+            }
+        });
+    });    
+
+    socket.on('can-i-join-game', (roomCode, callback) => {
+        roomCode = strip(roomCode);
+        if(rooms[roomCode] !== null && rooms[roomCode] !== undefined)
+        {
+            callback(true);
+            return;
+        }
+        callback(false);
+    });
+
+    socket.on('can-i-host-game', (roomCode, callback) =>
+    {
+        roomCode = strip(roomCode);
+        console.log(rooms[roomCode]);
+        if(rooms[roomCode] === null || rooms[roomCode] === undefined)
+        {
+            callback(true);
+            return;
+        }
+        callback(false);
     });
 });
 

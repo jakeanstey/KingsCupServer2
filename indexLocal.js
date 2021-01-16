@@ -52,11 +52,12 @@ const cards = [
 
 io.on('connection', socket =>
 {
+    console.log('user connected');
+
     socket.on('join-game', (username, gender, roomCode, peerID) =>
     {
         /// debug constant
-        // roomCode = strip(roomCode);
-        roomCode = 'ASDF';
+        roomCode = strip(roomCode);
         
         let room = rooms[roomCode];
         if(room === undefined || room === null)
@@ -373,7 +374,54 @@ io.on('connection', socket =>
                 room = null;
             }
         });
+
+        socket.on('has-user-left', (otherPeerID, callback) =>
+        {
+            if(room.players.find(player => player.peerID === otherPeerID) !== null)
+            {
+                console.log(peerID + ' lost connection to ' + otherPeerID);
+                callback(true);
+                return;
+            }
+            callback(false);
+        });
+
+        socket.on('left-game', () =>
+        {
+            console.log(peerID + ' left');
+            room.players = room.players.filter(player => player.peerID !== peerID);
+            socket.to(roomCode).broadcast.emit('user-disconnected', peerID);
+            
+            // clean up and dispose if needed
+            if (room.players.length === 0)
+            {
+                console.log('room', roomCode, 'empty. cleaning up');
+                room = null;
+            }
+        });
     });    
+
+    socket.on('can-i-join-game', (roomCode, callback) => {
+        roomCode = strip(roomCode);
+        if(rooms[roomCode] !== null && rooms[roomCode] !== undefined)
+        {
+            callback(true);
+            return;
+        }
+        callback(false);
+    });
+
+    socket.on('can-i-host-game', (roomCode, callback) =>
+    {
+        roomCode = strip(roomCode);
+        console.log(rooms[roomCode]);
+        if(rooms[roomCode] === null || rooms[roomCode] === undefined)
+        {
+            callback(true);
+            return;
+        }
+        callback(false);
+    });
 });
 
 
