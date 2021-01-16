@@ -323,7 +323,7 @@ io.on('connection', socket =>
         });
 
         socket.on('more', () =>{
-            this.broadcastCurrentPlayer();
+            broadcastCurrentPlayer();
         });
 
         function processQueue()
