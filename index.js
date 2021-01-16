@@ -368,7 +368,17 @@ io.on('connection', socket =>
                 room = null;
             }
         });
-    });    
+
+        socket.on('has-user-left', (otherPeerID, callback) =>
+        {
+            if(room.players.find(player => player.peerID === otherPeerID) !== null)
+            {
+                cvonsole.log(peerID + ' lost connection to ' + otherPeerID);
+                callback(true);
+            }
+            return false;
+        });
+    });
 });
 
 
