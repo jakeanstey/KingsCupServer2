@@ -1,0 +1,9 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kingscup",
+      "sha256_cert_fingerprints":
+      ["12:72:68:44:7E:4D:97:2C:8C:7B:53:AC:89:46:F2:9E:F5:51:BE:1D:E7:19:82:15:DD:05:6A:C8:AC:27:8A:88"]
+    }
+  }]
