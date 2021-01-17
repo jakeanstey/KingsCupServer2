@@ -5,7 +5,6 @@ const express = require('express');
 const http = require('http');
 const app = express();
 const socketIO = require('socket.io');
-const { ExpressPeerServer, PeerServer } = require('peer');
 
 const server = http.createServer(app).listen(port);
 
@@ -17,15 +16,6 @@ app.get('/', (req, res) => {
     console.log('website reached')
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-
-const peerServer = ExpressPeerServer(server, { 
-    path: '/',
-    debug: true
-});
-
-app.use('/peer', peerServer);
-
 /// GAME LOGIC ///
 
 let rooms = {};
@@ -330,7 +320,7 @@ io.on('connection', socket =>
         });
 
         socket.on('more', () =>{
-            this.broadcastCurrentPlayer();
+            broadcastCurrentPlayer();
         });
 
         function processQueue()
@@ -398,6 +388,25 @@ io.on('connection', socket =>
                 console.log('room', roomCode, 'empty. cleaning up');
                 room = null;
             }
+        });
+
+        socket.on('get-current-players', callback => 
+        {
+            callback(JSON.stringify(room.players.map(player => { return { peerID: player.peerID, username: player.username }})));
+        });
+
+        socket.on('kick-player', peerID =>
+        {
+            try
+            {
+                const player = room.players.find(player => player.peerID === peerID);
+                if(player !== null)
+                {
+                    console.log('host is kicking ' + peerID);
+                    player.socket.emit('kicked');
+                }
+            }
+            catch(e) {console.log(e)}
         });
     });    
 

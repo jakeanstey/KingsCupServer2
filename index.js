@@ -1,12 +1,9 @@
 const path = require('path');
 const fs = require('fs');
-const port = process.env.PORT || 8080;
 const express = require('express');
-const http = require('http');
 const https = require('https');
 const app = express();
 const socketIO = require('socket.io');
-const { ExpressPeerServer } = require('peer');
 
 const secureServer = https.createServer({
     key: fs.readFileSync('data/server.key'),
@@ -15,8 +12,6 @@ const secureServer = https.createServer({
     requestCert: false,
     rejectUnauthorized: false
 }, app);
-
-const server = http.createServer(app).listen(port);
 
 secureServer.listen(443, () => {
     console.log('listening https');
@@ -29,15 +24,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     console.log('website reached')
     res.sendFile(path.join(__dirname, 'index.html'));
-  });
-
-
-const peerServer = ExpressPeerServer(server, { 
-    path: '/',
-    debug: false
 });
-
-app.use('/peer', peerServer);
 
 /// GAME LOGIC ///
 let rooms = {};
@@ -391,6 +378,25 @@ io.on('connection', socket =>
                 console.log('room', roomCode, 'empty. cleaning up');
                 room = null;
             }
+        });
+
+        socket.on('get-current-players', callback => 
+        {
+            callback(JSON.stringify(room.players.map(player => { return { peerID: player.peerID, username: player.username }})));
+        });
+
+        socket.on('kick-player', peerID =>
+        {
+            try
+            {
+                const player = room.players.find(player => player.peerID === peerID);
+                if(player !== null)
+                {
+                    console.log('host is kicking ' + peerID);
+                    player.socket.emit('kicked');
+                }
+            }
+            catch(e) {console.log(e)}
         });
     });    
 
