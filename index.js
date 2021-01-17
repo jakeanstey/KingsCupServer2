@@ -73,6 +73,7 @@ io.on('connection', socket =>
         socket.to(roomCode).broadcast.emit('user-joined', username, peerID);
         console.log('player', peerID, 'joined', roomCode);
 
+        socket.removeAllListeners('start-game');
         socket.on('start-game', () =>
         {
             if(room.players.length > 1)
@@ -84,6 +85,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('pause-game');
         socket.on('pause-game', () =>
         {
             console.log('room', roomCode, 'paused');
@@ -91,6 +93,7 @@ io.on('connection', socket =>
             room.state = 0;
         });
 
+        socket.removeAllListeners('resume-game');
         socket.on('resume-game', () =>
         {
             console.log('room', roomCode, 'resumed');
@@ -98,6 +101,7 @@ io.on('connection', socket =>
             room.state = 1;
         });
 
+        socket.removeAllListeners('end-turn');
         socket.on('end-turn', () =>
         {
             if(room.state === 1)
@@ -110,8 +114,10 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('pick-card');
         socket.on('pick-card', () =>
         {
+            console.log('picking card');
             if(room.state === 1)
             {
                 const card = JSON.stringify(room.deck.dealCard());
@@ -119,6 +125,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('vote');
         socket.on('vote', (peerID, username) =>
         {
             const playerCount = room.players.length;
@@ -161,6 +168,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('two-for-you');
         socket.on('two-for-you', (peerID, username) =>
         {
             if(room.state === 1)
@@ -169,6 +177,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('choose-date');
         socket.on('choose-date', (myPeerID, myUsername, peerID, username) =>
         {
             if(room.dates[myPeerID] === undefined || room.dates[myPeerID] === null)
@@ -183,8 +192,10 @@ io.on('connection', socket =>
             io.in(roomCode).emit('date-added', myPeerID, myUsername, peerID, username);
         });
 
+        socket.removeAllListeners('notify-dates-to-drink');
         socket.on('notify-dates-to-drink', (peerID, username) =>
         {
+            if(room === undefined) return;
             const dates = room.dates[peerID];
             if(dates !== undefined && dates !== null)
             {
@@ -201,6 +212,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('start-never-have-i-ever');
         socket.on('start-never-have-i-ever', () =>
         {
             room.neverHaveIEver = {};
@@ -215,6 +227,7 @@ io.on('connection', socket =>
             broadcastNeverHaveIEverTurn();
         });
 
+        socket.removeAllListeners('never-have-i-ever');
         socket.on('never-have-i-ever', (peerID, iHave) =>
         {
             if(room.state == 1 && room.neverHaveIEver !== null)
@@ -252,12 +265,14 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('rock-paper-scissors');
         socket.on('rock-paper-scissors', (initiatorPeerID, initiatorUsername, oponentPeerID) =>
         {
             // tell the other player they are playing
             socket.to(roomCode).broadcast.emit('start-rock-paper-scissors', initiatorPeerID, oponentPeerID);
         });
 
+        socket.removeAllListeners('choose-rock-paper-scissors');
         socket.on('choose-rock-paper-scissors', (peerID, choice, username) =>
         {
             room.rockPaperscissorsMoves.push({peerID, choice, username});
@@ -299,6 +314,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('last-to-tap-the-screen');
         socket.on('last-to-tap-the-screen', (peerID, username) =>
         {
             console.log(peerID, 'tapped the screen');
@@ -309,6 +325,7 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('more');
         socket.on('more', () =>{
             broadcastCurrentPlayer();
         });
@@ -340,21 +357,26 @@ io.on('connection', socket =>
             io.in(roomCode).emit('never-have-i-ever', currentPlayer.peerID, currentPlayer.username);
         }
 
+        socket.removeAllListeners('disconnect');
         socket.on('disconnect', reason =>
         {
-            console.log('player', peerID, 'left', roomCode);
-
-            room.players = room.players.filter(player => player.peerID !== peerID);
-            socket.to(roomCode).broadcast.emit('user-disconnected', peerID);
-            
-            // clean up and dispose if needed
-            if (room.players.length === 0)
+            if(room !== null && room !== undefined)
             {
-                console.log('room', roomCode, 'empty. cleaning up');
-                room = null;
+                console.log('player', peerID, 'left', roomCode);
+
+                room.players = room.players.filter(player => player.peerID !== peerID);
+                socket.to(roomCode).broadcast.emit('user-disconnected', peerID);
+                
+                // clean up and dispose if needed
+                if (room.players.length === 0)
+                {
+                    console.log('room', roomCode, 'empty. cleaning up');
+                    room = null;
+                }
             }
         });
 
+        socket.removeAllListeners('has-user-left');
         socket.on('has-user-left', (otherPeerID, callback) =>
         {
             if(room.players.find(player => player.peerID === otherPeerID) !== null)
@@ -366,12 +388,14 @@ io.on('connection', socket =>
             callback(false);
         });
 
+        socket.removeAllListeners('left-game');
         socket.on('left-game', () =>
         {
             console.log(peerID + ' left');
             room.players = room.players.filter(player => player.peerID !== peerID);
             socket.to(roomCode).broadcast.emit('user-disconnected', peerID);
             
+            socket.leave(roomCode);
             // clean up and dispose if needed
             if (room.players.length === 0)
             {
@@ -380,11 +404,13 @@ io.on('connection', socket =>
             }
         });
 
+        socket.removeAllListeners('get-current-players');
         socket.on('get-current-players', callback => 
         {
             callback(JSON.stringify(room.players.map(player => { return { peerID: player.peerID, username: player.username }})));
         });
 
+        socket.removeAllListeners('kick-player');
         socket.on('kick-player', peerID =>
         {
             try
