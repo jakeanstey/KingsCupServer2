@@ -424,6 +424,27 @@ io.on('connection', socket =>
             }
             catch(e) {console.log(e)}
         });
+
+        socket.removeAllListeners('lowest-card');
+        socket.on('lowest-card', () =>
+        {
+            let deck = new Deck();
+            let result = []
+            let loser = { peerID: null, value: 14, username: null }
+            for(var player of room.players)
+            {
+                const card = deck.dealCard();
+
+                if(card.fullValue < loser.value)
+                {
+                    loser = { peerID: player.peerID, value: card.fullValue, username: player.username };
+                }
+
+                result.push({ peerID: player.peerID, card });
+            }
+            io.in(roomCode).emit('lowest-card', result, loser);
+            deck = null;
+        });
     });    
 
     socket.on('can-i-join-game', (roomCode, callback) => {
