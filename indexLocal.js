@@ -23,19 +23,19 @@ const Deck = require('./Deck');
 const bank = 'abcdefghijklmnopqrstuvwxyz1234567890';
 const cards = [
     {
-        faceName: 'K',
+        faceName: '10',
         suit: 0
     },
     {
-        faceName: 'K',
+        faceName: '10',
         suit: 0
     },
     {
-        faceName: 'K',
+        faceName: '10',
         suit: 0
     },
     {
-        faceName: 'K',
+        faceName: '10',
         suit: 0
     }
 ];
@@ -433,6 +433,27 @@ io.on('connection', socket =>
                 }
             }
             catch(e) {console.log(e)}
+        });
+
+        socket.removeAllListeners('lowest-card');
+        socket.on('lowest-card', () =>
+        {
+            let deck = new Deck();
+            let result = []
+            let loser = { peerID: null, value: 14, username: null }
+            for(var player of room.players)
+            {
+                const card = deck.dealCard();
+
+                if(card.fullValue < loser.value)
+                {
+                    loser = { peerID: player.peerID, value: card.fullValue, username: player.username };
+                }
+
+                result.push({ peerID: player.peerID, card });
+            }
+            io.in(roomCode).emit('lowest-card', result, loser);
+            deck = null;
         });
     });    
 
