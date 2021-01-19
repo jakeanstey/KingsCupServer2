@@ -455,6 +455,34 @@ io.on('connection', socket =>
             io.in(roomCode).emit('lowest-card', result, loser);
             deck = null;
         });
+    
+        socket.removeAllListeners('start-categories');
+        socket.on('start-categories', () =>
+        {
+            room.categories = {
+                turnIndex: (room.turnIndex + 1) % room.players.length
+            }            
+            broadcastCategoriesTurn();
+        });
+
+        socket.removeAllListeners('categories-next');
+        socket.on('categories-next', () =>
+        {
+            room.categories.turnIndex = (room.categories.turnIndex + 1) % room.players.length;
+            broadcastCategoriesTurn();
+        });
+
+        socket.removeAllListeners('categories-lost');
+        socket.on('categories-lost', (peerID, username) =>
+        {
+            io.in(roomCode).emit('categories-lost', peerID, username);
+        });
+
+        const broadcastCategoriesTurn = () =>
+        {
+            const player = room.players[room.categories.turnIndex];
+            io.in(roomCode).emit('categories-turn', player.peerID, player.username);
+        }
     });    
 
     socket.on('can-i-join-game', (roomCode, callback) => {
